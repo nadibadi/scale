@@ -5,6 +5,7 @@
 import pygame
 import sys
 import os
+import time
 
 pygame.init()
 # GLOBALS
@@ -24,18 +25,183 @@ def main():
     menuScreen= True
     tutorialScreen= False
     tutResultScreen= False
+    helpScreen= False
     gameScreen= False
     
 
     while running:
+        print('SCALING LADDERS prototype initiated. Have fun playing!')
         ### MENU ###
+
         menu(menuScreen)
 
         tutorial(tutorialScreen)
 
-        tutResult(tutResultScreen)
+        tutResult(tutResultScreen, str(0))
+
+        helpKeys(helpScreen)
 
 
+def helpKeys(helpScreen):
+    while helpScreen:
+        screen.fill('white')
+        # move
+        text= 'move keys'
+        position= screenHeight*0.1
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'grey',border= 'darkgrey',text= text,textsize= 30,textcolour= 'black')
+
+        text= 'arrow keys'
+        position= screenHeight*0.2
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'black',border= 'darkgrey',text= text,textsize= 30,textcolour= 'white')
+
+        text= 'WASD'
+        position= screenHeight*0.3
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'black',border= 'darkgrey',text= text,textsize= 30,textcolour= 'white')
+
+        # action
+        text= 'action keys'
+        position= screenHeight*0.5
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'grey',border= 'darkgrey',text= text,textsize= 30,textcolour= 'black')
+
+        text= 'space'
+        position= screenHeight*0.6
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'black',border= 'darkgrey',text= text,textsize= 30,textcolour= 'white')
+
+        text= 'shift'
+        position= screenHeight*0.7
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'black',border= 'darkgrey',text= text,textsize= 30,textcolour= 'white')
+
+        text= 'p'
+        position= screenHeight*0.8
+        xsize= 4 * unit
+        Button(size= (xsize, unit),xpos= screenWidth*0.5-unit*2,ypos= position,colour= 'black',border= 'darkgrey',text= text,textsize= 30,textcolour= 'white')
+
+        xsize= 4 * unit
+        menuBUTTON= Button(size= (xsize, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*1,colour= 'grey',border= 'black',text= 'MENU',textsize= 30,textcolour= 'black')
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                if menuBUTTON.rect.collidepoint(event.pos):
+                    helpScreen= False
+                    menuScreen= True
+                    menu(menuScreen)
+        
+        pygame.display.update()
+
+def menu(menuScreen):
+# MENU
+    logo= pygame.image.load(os.path.join("images","logo.png"))
+    logoRect= logo.get_rect()
+    logoRect.center= (screenWidth*0.5,screenHeight*0.28)
+
+    # HERO
+    heroMenu= Hero("hero.png",0.5,-90/unit,(screenHeight*0.28+185)/unit)
+    heroSpeed= 3
+    gravity= 0.5
+    jumpHeight=8
+
+    stop= False
+
+    while menuScreen:
+        # DRAW
+        screen.fill('white')
+
+        ### HERO ANIMATION ###
+        bottom=pygame.rect.Rect((-100,screenHeight*0.28+unit*2),(screenWidth+200,unit*0.6))
+        top=pygame.rect.Rect((185,screenHeight*0.28+unit*2 - 230),(unit,unit*0.6))
+        idot=pygame.rect.Rect((185+unit,screenHeight*0.28+unit*2 - 170),(30,unit*0.6))
+        um=pygame.rect.Rect((215+unit,screenHeight*0.28+unit*2 - 150),(100,unit*0.6))
+        lm=pygame.rect.Rect((315+unit,screenHeight*0.28+unit*2 - 50),(125,unit*0.6))
+
+        floors= [bottom,top,idot,um,lm]
+
+        floorCollideList= list()
+        floorHit= 0
+        heroMenu.rect.bottom += 1
+        for floorIdx, floor in enumerate(floors):
+            if floor.collidepoint(heroMenu.rect.midbottom):
+                floorHit= floorIdx
+                tmp= True
+                floorCollideList.append(tmp)
+            else:
+                tmp= False
+                floorCollideList.append(tmp)
+            
+        heroMenu.rect.bottom -= 1
+        if any(floorCollideList):
+            floorCollide= True
+        else:
+            floorCollide= False
+
+        # FALLING
+        if not stop:
+            if not heroMenu.fall:
+                if not floorCollide:
+                    heroMenu.fall= True
+            if heroMenu.fall:
+                heroMenu.ypos+= heroMenu.fall_vel
+                heroMenu.fall_vel += gravity
+                if floorCollide:
+                    heroMenu.fall= False
+                    heroMenu.ypos= floors[floorHit].top - 1
+                    heroMenu.fall_vel= 0
+
+        ladder= pygame.rect.Rect((185,screenHeight*0.28+unit*2 - 230),(unit,250))
+
+        if heroMenu.xpos > screenWidth + 20:
+            heroMenu.xpos = - 50
+
+        if heroMenu.xpos > 210 and heroMenu.xpos < 220:
+            stop= True
+            heroMenu.movey(-1)
+
+        if heroMenu.ypos <= ladder.top-1:
+            stop= False
+        ### HERO ANIMATION END ###
+
+
+        # buttons
+
+        startBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.60,colour= 'grey',border= 'black',text= 'GAME',textsize= 30,textcolour= 'black')
+        helpBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.73,colour= 'grey',border= 'black',text= 'HELP',textsize= 30,textcolour= 'black')
+        quitBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.86,colour= 'grey',border= 'black',text= 'QUIT',textsize= 30,textcolour= 'black')
+        
+        # EVENTS
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if startBUTTON.rect.collidepoint(event.pos):
+                    menuScreen= False
+                    tutorialScreen= True
+                    tutorial(tutorialScreen)
+                if helpBUTTON.rect.collidepoint(event.pos):
+                    menuScreen= False
+                    helpScreen= True
+                    helpKeys(helpScreen)
+                if quitBUTTON.rect.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+
+
+        # DRAW
+        # update screen
+        screen.blit(logo,logoRect)
+        if not stop:
+            heroMenu.movex(1,heroSpeed)
+        heroMenu.draw()
+        pygame.display.update()
+        clock.tick(FPS)
 
 
 #### SCREEN FUNCTIONS ####
@@ -104,6 +270,8 @@ def tutorial(tutorialScreen):
 
     yHist= list()
     yHist.append(hero.ypos)
+
+    start_time= time.time()
 
             ### TUTORIAL ###
     while tutorialScreen:
@@ -262,7 +430,7 @@ def tutorial(tutorialScreen):
             y = 1
             hero.movey(y)
 
-        # JUMPING    
+        # JUMPING  
         if hero.jump:
             heroSpeed= 2.5
             jumpCollide,jumpHit= checkFloorJump(floors,hero,jumpHeight,yHist)
@@ -298,7 +466,7 @@ def tutorial(tutorialScreen):
                     hero.fall= False
                     hero.ypos= screenHeight - floorParameters[fallHit][0] * unit - 1
                     hero.fall_vel= 0
-        # track x coordinates
+        # track coordinates
         pos= [hero.xpos,hero.ypos]
         ls= [xHist,yHist]
         for l,p in enumerate(pos):
@@ -310,8 +478,10 @@ def tutorial(tutorialScreen):
 
         # WIN
         if hero.rect.colliderect(winDoor):
+            end_time= time.time()
+            elapsed_time= round(end_time-start_time,2)
             tutResultScreen= True
-            tutResult(tutResultScreen)
+            tutResult(tutResultScreen,elapsed_time)
             tutorialScreen= False
         # DRAW
         
@@ -337,60 +507,7 @@ def tutorial(tutorialScreen):
 
 
 
-
-def menu(menuScreen):
-# MENU
-    logo= pygame.image.load(os.path.join("images","logo.png"))
-    logoRect= logo.get_rect()
-    logoRect.center= (screenWidth*0.5,screenHeight*0.28)
-
-    
-    while menuScreen:
-        # DRAW
-        screen.fill('white')
-        # buttons
-
-        startBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.60,colour= 'grey',border= 'black',text= 'GAME',textsize= 30,textcolour= 'black')
-        tutorialBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.73,colour= 'grey',border= 'black',text= 'TUTORIAL',textsize= 30,textcolour= 'black')
-        quitBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.86,colour= 'grey',border= 'black',text= 'QUIT',textsize= 30,textcolour= 'black')
-        
-        # EVENTS
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if startBUTTON.rect.collidepoint(event.pos):
-                    pass
-                    #menuScreen= False
-                    #gameScreen= True
-                if tutorialBUTTON.rect.collidepoint(event.pos):
-                    tutorialBUTTON.colour='darkgrey'
-                    tutorialBUTTON.draw()
-                if quitBUTTON.rect.collidepoint(event.pos):
-                    pass
-            if event.type == pygame.MOUSEBUTTONUP:
-                if startBUTTON.rect.collidepoint(event.pos):
-                    pass
-                    #menuScreen= False
-                    #gameScreen= True
-                if tutorialBUTTON.rect.collidepoint(event.pos):
-                    menuScreen= False
-                    tutorialScreen= True
-                    tutorial(tutorialScreen)
-                if quitBUTTON.rect.collidepoint(event.pos):
-                    pygame.quit()
-                    sys.exit()
-
-
-        # DRAW
-        # update screen
-        screen.blit(logo,logoRect)
-        pygame.display.update()
-        clock.tick(FPS)
-
-
-def tutResult(tutResultScreen):
+def tutResult(tutResultScreen,elapsed_time):
     while tutResultScreen:
         screen.fill('white')
         image= pygame.image.load(os.path.join("images","result.png"))
@@ -398,8 +515,15 @@ def tutResult(tutResultScreen):
         imageRect.center= (screenWidth/2,screenHeight/2)
         screen.blit(image,imageRect)
 
+        #it took you
+        Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.7,colour= 'white',border= 'white',text= 'it took you:',textsize= 32,textcolour= 'black')
+        #time
+        Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.78,colour= 'white',border= 'white',text= str(elapsed_time)+' seconds',textsize= 25,textcolour= 'black')
+        #can you be faster?
+        Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*0.90,colour= 'white',border= 'white',text= 'can you beat your score?',textsize= 25,textcolour= 'black')
+
         menuBUTTON= Button(size= (4 * unit, unit),xpos= screenWidth*0.5 - 2*unit,ypos= screenHeight*1,colour= 'grey',border= 'black',text= 'MENU',textsize= 30,textcolour= 'black')
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -445,7 +569,6 @@ def checkFloorStand(floors,hero,jumpHeight,yHist):
                 floorHit= floorIdx
                 tmp= True
                 floorCollideList.append(tmp)
-                print(f"top: {floor.rect.top},hero: {hero.rect.bottom}")
             else:
                 tmp= False
                 floorCollideList.append(tmp)
